@@ -13,7 +13,7 @@ go get github.com/ykallan/memorydb
 ### 2.使用
 
 ```go
-ms := memorydb.NewMemoryStorage()
+ms := memorydb.NewMemoryDataBase()
 
 setValue := 1
 expire := 10
@@ -47,7 +47,7 @@ getValue := ms.Get(index)
 - 对于数据库加锁与否的简单性能测试，可能有十足的偶然性：
 
 ```go
-ms := memorydb.NewMemoryStorageWithLock()
+ms := memorydb.NewMemoryDataBaseWithLock()
 //2407669  lock
 //2118867  unlock
 time.Sleep(time.Second)
