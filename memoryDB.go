@@ -12,47 +12,47 @@ type BaseInfo struct {
 	Value interface{}
 }
 
-type MemoryStorage struct {
+type MemoryDataBase struct {
 	count         int
 	useLock       bool
-	msLock        sync.Mutex
+	mdLock        sync.Mutex
 	baseInfoSlice []*BaseInfo
 }
 
-func (ms *MemoryStorage) Set(value interface{}, expire int) int {
-	index := ms.generateIndex()
+func (md *MemoryDataBase) Set(value interface{}, expire int) int {
+	index := md.generateIndex()
 	baseInfo := &BaseInfo{
 		Index: index,
 		Age:   time.Now().Add(time.Duration(expire) * time.Second),
 		Value: value,
 	}
-	ms.lock()
-	ms.baseInfoSlice = append(ms.baseInfoSlice, baseInfo)
-	ms.unlock()
+	md.lock()
+	md.baseInfoSlice = append(md.baseInfoSlice, baseInfo)
+	md.unlock()
 	return index
 }
 
-func (ms *MemoryStorage) SetBatch(valueSlice []interface{}, expire int) []int {
+func (md *MemoryDataBase) SetBatch(valueSlice []interface{}, expire int) []int {
 	var indexSlice []int
-	ms.lock()
+	md.lock()
 	for _, value := range valueSlice {
-		index := ms.generateIndex()
+		index := md.generateIndex()
 		baseInfo := &BaseInfo{
 			Index: index,
 			Age:   time.Now().Add(time.Duration(expire) * time.Second),
 			Value: value,
 		}
-		ms.baseInfoSlice = append(ms.baseInfoSlice, baseInfo)
+		md.baseInfoSlice = append(md.baseInfoSlice, baseInfo)
 	}
-	ms.unlock()
+	md.unlock()
 	return indexSlice
 }
 
-func (ms *MemoryStorage) Get(index int) interface{} {
-	if len(ms.baseInfoSlice) == 0 {
+func (md *MemoryDataBase) Get(index int) interface{} {
+	if len(md.baseInfoSlice) == 0 {
 		return nil
 	}
-	for _, baseInfo := range ms.baseInfoSlice {
+	for _, baseInfo := range md.baseInfoSlice {
 		if baseInfo.Index == index {
 			return baseInfo.Value
 		}
@@ -60,38 +60,38 @@ func (ms *MemoryStorage) Get(index int) interface{} {
 	return nil
 }
 
-func (ms *MemoryStorage) GetAll() []interface{} {
+func (md *MemoryDataBase) GetAll() []interface{} {
 	var result []interface{}
 
-	for _, baseInfo := range ms.baseInfoSlice {
+	for _, baseInfo := range md.baseInfoSlice {
 		result = append(result, baseInfo.Value)
 	}
 
 	return result
 }
 
-func (ms *MemoryStorage) Remove(index int) bool {
-	for index, baseInfo := range ms.baseInfoSlice {
+func (md *MemoryDataBase) Remove(index int) bool {
+	for _, baseInfo := range md.baseInfoSlice {
 		if baseInfo.Index == index {
-			ms.lock()
-			ms.baseInfoSlice = append(ms.baseInfoSlice[:index], ms.baseInfoSlice[index+1:]...)
-			ms.unlock()
+			md.lock()
+			md.baseInfoSlice = append(md.baseInfoSlice[:index], md.baseInfoSlice[index+1:]...)
+			md.unlock()
 			return true
 		}
 	}
 	return false
 }
 
-func (ms *MemoryStorage) Flush() {
-	ms.baseInfoSlice = []*BaseInfo{}
+func (md *MemoryDataBase) Flush() {
+	md.baseInfoSlice = []*BaseInfo{}
 }
 
-func (ms *MemoryStorage) Update(newObject interface{}, index int) error {
-	for _, baseInfo := range ms.baseInfoSlice {
+func (md *MemoryDataBase) Update(newObject interface{}, index int) error {
+	for _, baseInfo := range md.baseInfoSlice {
 		if baseInfo.Index == index {
-			ms.lock()
+			md.lock()
 			baseInfo.Value = newObject
-			ms.unlock()
+			md.unlock()
 			return nil
 		}
 	}
@@ -99,61 +99,61 @@ func (ms *MemoryStorage) Update(newObject interface{}, index int) error {
 	return errors.New("not found the current index of the database")
 }
 
-func (ms *MemoryStorage) Size() int {
-	return len(ms.baseInfoSlice)
+func (md *MemoryDataBase) Size() int {
+	return len(md.baseInfoSlice)
 }
 
-func (ms *MemoryStorage) Empty() bool {
-	return len(ms.baseInfoSlice) == 0
+func (md *MemoryDataBase) IsEmpty() bool {
+	return len(md.baseInfoSlice) == 0
 }
 
-func (ms *MemoryStorage) generateIndex() int {
-	ms.lock()
-	ms.count += 1
-	ms.unlock()
-	return ms.count
+func (md *MemoryDataBase) generateIndex() int {
+	md.lock()
+	md.count += 1
+	md.unlock()
+	return md.count
 }
 
-func (ms *MemoryStorage) computeIsTimeout(age time.Time) bool {
+func (md *MemoryDataBase) computeIsTimeout(age time.Time) bool {
 	nowTime := time.Now()
 	return nowTime.After(age)
 }
 
-func (ms *MemoryStorage) filter() {
+func (md *MemoryDataBase) filter() {
 	for {
-		for index, baseInfo := range ms.baseInfoSlice {
-			if ms.computeIsTimeout(baseInfo.Age) {
-				ms.lock()
-				ms.baseInfoSlice = append(ms.baseInfoSlice[:index], ms.baseInfoSlice[index+1:]...)
-				ms.unlock()
+		for index, baseInfo := range md.baseInfoSlice {
+			if md.computeIsTimeout(baseInfo.Age) {
+				md.lock()
+				md.baseInfoSlice = append(md.baseInfoSlice[:index], md.baseInfoSlice[index+1:]...)
+				md.unlock()
 			}
 		}
 		time.Sleep(time.Second)
 	}
 }
 
-func (ms *MemoryStorage) lock() {
-	if ms.useLock {
-		ms.msLock.Lock()
+func (md *MemoryDataBase) lock() {
+	if md.useLock {
+		md.mdLock.Lock()
 	}
 }
 
-func (ms *MemoryStorage) unlock() {
-	if ms.useLock {
-		ms.msLock.Unlock()
+func (md *MemoryDataBase) unlock() {
+	if md.useLock {
+		md.mdLock.Unlock()
 	}
 }
 
-func New() *MemoryStorage {
-	ms := MemoryStorage{}
-	go ms.filter()
-	return &ms
+func NewMemoryDataBase() *MemoryDataBase {
+	md := MemoryDataBase{}
+	go md.filter()
+	return &md
 }
 
-func NewWithLock() *MemoryStorage {
-	ms := MemoryStorage{
+func NewMemoryDataBaseWithLock() *MemoryDataBase {
+	md := MemoryDataBase{
 		useLock: true,
 	}
-	go ms.filter()
-	return &ms
+	go md.filter()
+	return &md
 }

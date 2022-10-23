@@ -6,12 +6,13 @@ import (
 )
 
 func main() {
-	ms := memorydb.NewWithLock()
-	//2407669  lock
-	//2118867  unlock
-	for i := 0; i < 20; i++ {
-		ms.Set(i, 100)
-	}
-	fmt.Println(ms.GetAll())
-
+	set := memorydb.NewSet()
+	set.Add(1)
+	set.Add(1)
+	set.Add(1)
+	set.Add(1)
+	set.Add(1)
+	//list := set.ToList()
+	fmt.Println(set.ToString())
+	set.Print()
 }
