@@ -39,8 +39,7 @@ getValue := ms.Get(index)
 
 ### 4.项目中的一点使用须知
 
--
-目前在Set、Remove、Update、生成数据对应id、筛选过期value的时候，默认都没有使用锁，可能会出现线程安全的问题，如果对线程安全有要求，可以使用`memorydb.NewWithLock()`
+-目前在Set、Remove、Update、生成数据对应id、筛选过期value的时候，默认都没有使用锁，可能会出现线程安全的问题，如果对线程安全有要求，可以使用`memorydb.NewWithLock()`
 创建数据库对象。
 
 

@@ -19,6 +19,8 @@ type MemoryDataBase struct {
 	baseInfoSlice []*BaseInfo
 }
 
+// 添加任意类型的元素到数据库中，过期时间为秒，返回元素对应的id
+
 func (md *MemoryDataBase) Set(value interface{}, expire int) int {
 	index := md.generateIndex()
 	baseInfo := &BaseInfo{
@@ -31,6 +33,8 @@ func (md *MemoryDataBase) Set(value interface{}, expire int) int {
 	md.unlock()
 	return index
 }
+
+// 添加一个切片到数据库中，返回对应id的切片
 
 func (md *MemoryDataBase) SetBatch(valueSlice []interface{}, expire int) []int {
 	var indexSlice []int
@@ -48,25 +52,27 @@ func (md *MemoryDataBase) SetBatch(valueSlice []interface{}, expire int) []int {
 	return indexSlice
 }
 
-func (md *MemoryDataBase) Get(index int) interface{} {
+//通过添加的id获取元素，返回元素与ok，是否成功
+
+func (md *MemoryDataBase) Get(index int) (value interface{}, ok bool) {
 	if len(md.baseInfoSlice) == 0 {
-		return nil
+		return nil, false
 	}
 	for _, baseInfo := range md.baseInfoSlice {
 		if baseInfo.Index == index {
-			return baseInfo.Value
+			return baseInfo.Value, true
 		}
 	}
-	return nil
+	return nil, false
 }
 
 func (md *MemoryDataBase) GetAll() []interface{} {
 	var result []interface{}
-
+	md.lock()
 	for _, baseInfo := range md.baseInfoSlice {
 		result = append(result, baseInfo.Value)
 	}
-
+	md.unlock()
 	return result
 }
 
@@ -108,9 +114,9 @@ func (md *MemoryDataBase) IsEmpty() bool {
 }
 
 func (md *MemoryDataBase) generateIndex() int {
-	md.lock()
+	md.mdLock.Lock()
 	md.count += 1
-	md.unlock()
+	md.mdLock.Unlock()
 	return md.count
 }
 
