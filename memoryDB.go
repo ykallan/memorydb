@@ -113,6 +113,18 @@ func (md *MemoryDataBase) IsEmpty() bool {
 	return len(md.baseInfoSlice) == 0
 }
 
+// 判断这个元素是否已经在库中
+
+func (md *MemoryDataBase) Has(value interface{}) (index int, ok bool) {
+	for _, baseInfo := range md.baseInfoSlice {
+		if baseInfo.Value == value {
+			return baseInfo.Index, true
+		}
+	}
+
+	return 0, false
+}
+
 func (md *MemoryDataBase) generateIndex() int {
 	md.mdLock.Lock()
 	md.count += 1
